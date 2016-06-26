@@ -1,0 +1,6 @@
+framework module Gatling {
+  umbrella header "Gatling-umbrella.h"
+
+  export *
+  module * { export * }
+}

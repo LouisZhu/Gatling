@@ -1,0 +1,16 @@
+PODS:
+  - Gatling (0.1.0)
+
+DEPENDENCIES:
+  - Gatling (from `../`)
+
+EXTERNAL SOURCES:
+  Gatling:
+    :path: ../
+
+SPEC CHECKSUMS:
+  Gatling: 9766c3d4e0a3e74870fc5f1f6ffd3b166dd9eb62
+
+PODFILE CHECKSUM: e34f2948ebb5e381479bb222120bb7af7016f73c
+
+COCOAPODS: 1.0.0
