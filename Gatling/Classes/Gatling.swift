@@ -9,24 +9,6 @@
 import Foundation
 
 
-//class WeakStuff<T: AnyObject> {
-//    
-//    weak var stuff: T?
-//    
-//    init(stuff: T) {
-//        self.stuff = stuff
-//    }
-//    
-//    func stillAlive() -> Bool {
-//        if self.stuff == nil {
-//            return false
-//        }
-//        
-//        return true
-//    }
-//}
-
-
 public typealias Bullet = [String: AnyObject]
 
 
@@ -65,7 +47,7 @@ public class Gatling: NSObject {
     
     
     func performMission(_ mission: Mission) {
-        mission.target?.shotWithBullet(mission.bullet, ofGatling: self)
+        mission.target?.shotWithBullet(mission.configuration.bullet, ofGatling: self)
     }
     
 }
@@ -79,12 +61,12 @@ extension Gatling {
     
     class Mission {
         weak var target: GatlingTarget?
-        let bullet: Bullet?
+        let configuration: Configuration
         let timeStrategy: TimeStrategy
         
-        init(target: GatlingTarget, timeInterval: NSTimeInterval, bullet: Bullet?) {
+        init(target: GatlingTarget, timeInterval: NSTimeInterval, configuration: Configuration) {
             self.target = target
-            self.bullet = bullet
+            self.configuration = configuration
             self.timeStrategy = TimeStrategy(timeInterval: timeInterval)
         }
     }
@@ -114,11 +96,11 @@ extension Gatling {
     }
     
     
-    public struct Configuration {
-        var shouldShootImmediately: Bool = false
-        var workingQueue: dispatch_queue_t = dispatch_get_main_queue()
-        var bullet: Bullet? = nil
-        var invalidateConditionBlock: (() -> Bool)? = nil
+    public class Configuration {
+        public var shouldShootImmediately: Bool = false
+        public var workingQueue: dispatch_queue_t = dispatch_get_main_queue()
+        public var bullet: Bullet? = nil
+        public var invalidateConditionBlock: (() -> Bool)? = nil
     }
     
 }
@@ -130,23 +112,35 @@ extension Gatling {
 extension Gatling {
     
     
-    public func loadWithTarget(_ target: GatlingTarget, timeInterval: NSTimeInterval, shootsImmediately: Bool, bullet: Bullet? = nil) {
+//    public func loadWithTarget(_ target: GatlingTarget, timeInterval: NSTimeInterval, shootsImmediately: Bool, bullet: Bullet? = nil) {
+//        if self.timer == nil {
+//            let timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(Gatling.timerFired(_:)), userInfo: nil, repeats: true)
+//            NSRunLoop.currentRunLoop().addTimer(timer, forMode: NSRunLoopCommonModes);
+//            self.timer = timer
+//        }
+//        
+//        let mission = Mission(target: target, timeInterval: timeInterval, bullet: bullet)
+//        self.missions.append(mission)
+//        if shootsImmediately {
+//            self.performMission(mission)
+//        }
+//    }
+    
+    
+    public func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configurationHandler: (inout Configuration) -> Void) {
         if self.timer == nil {
             let timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(Gatling.timerFired(_:)), userInfo: nil, repeats: true)
             NSRunLoop.currentRunLoop().addTimer(timer, forMode: NSRunLoopCommonModes);
             self.timer = timer
         }
         
-        let mission = Mission(target: target, timeInterval: timeInterval, bullet: bullet)
-        self.missions.append(mission)
-        if shootsImmediately {
+        var configuration = Configuration()
+        configurationHandler(&configuration)
+        let mission = Mission(target: target, timeInterval: timeInterval, configuration: configuration)
+        self.missions.append(mission) // TODO: safety
+        if configuration.shouldShootImmediately {
             self.performMission(mission)
         }
-    }
-    
-    
-    public func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configuration: Configuration) {
-        
     }
     
     
