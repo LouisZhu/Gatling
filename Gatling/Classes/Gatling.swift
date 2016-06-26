@@ -9,22 +9,22 @@
 import Foundation
 
 
-class WeakStuff<T: AnyObject> {
-    
-    weak var stuff: T?
-    
-    init(stuff: T) {
-        self.stuff = stuff
-    }
-    
-    func stillAlive() -> Bool {
-        if self.stuff == nil {
-            return false
-        }
-        
-        return true
-    }
-}
+//class WeakStuff<T: AnyObject> {
+//    
+//    weak var stuff: T?
+//    
+//    init(stuff: T) {
+//        self.stuff = stuff
+//    }
+//    
+//    func stillAlive() -> Bool {
+//        if self.stuff == nil {
+//            return false
+//        }
+//        
+//        return true
+//    }
+//}
 
 
 public typealias Bullet = [String: AnyObject]
@@ -52,7 +52,7 @@ public class Gatling: NSObject {
     
     func shoot() {
         self.missions = self.missions.filter({ (mission: Mission) -> Bool in
-            return mission.target.stillAlive()
+            return mission.target != nil
         })
         
         let now = NSDate()
@@ -65,7 +65,7 @@ public class Gatling: NSObject {
     
     
     func performMission(_ mission: Mission) {
-        mission.target.stuff?.shotWithBullet(mission.bullet, ofGatling: self)
+        mission.target?.shotWithBullet(mission.bullet, ofGatling: self)
     }
     
 }
@@ -78,11 +78,11 @@ extension Gatling {
     
     
     class Mission {
-        let target: WeakStuff<GatlingTarget>
+        weak var target: GatlingTarget?
         let bullet: Bullet?
         let timeStrategy: TimeStrategy
         
-        init(target: WeakStuff<GatlingTarget>, timeInterval: NSTimeInterval, bullet: Bullet?) {
+        init(target: GatlingTarget, timeInterval: NSTimeInterval, bullet: Bullet?) {
             self.target = target
             self.bullet = bullet
             self.timeStrategy = TimeStrategy(timeInterval: timeInterval)
@@ -137,7 +137,7 @@ extension Gatling {
             self.timer = timer
         }
         
-        let mission = Mission(target: WeakStuff(stuff: target), timeInterval: timeInterval, bullet: bullet)
+        let mission = Mission(target: target, timeInterval: timeInterval, bullet: bullet)
         self.missions.append(mission)
         if shootsImmediately {
             self.performMission(mission)
@@ -152,12 +152,12 @@ extension Gatling {
     
     public func stopShootingTarget(_ target: GatlingTarget) {
         self.missions = self.missions.filter({ (mission: Mission) -> Bool in
-            if !mission.target.stillAlive() {
+            guard let missionTarget = mission.target else {
                 return false
             }
             
             // TODO: use a safe identifier
-            if unsafeAddressOf(mission.target.stuff!) != unsafeAddressOf(target) {
+            if unsafeAddressOf(missionTarget) != unsafeAddressOf(target) {
                 return true
             }
             
