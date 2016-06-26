@@ -71,11 +71,10 @@ public class Gatling: NSObject {
 }
 
 
-// MARK: - Nested classes
+// MARK: - Nested types
 
 
 extension Gatling {
-    
     
     
     class Mission {
@@ -114,6 +113,14 @@ extension Gatling {
         }
     }
     
+    
+    public struct Configuration {
+        var shouldShootImmediately: Bool = false
+        var workingQueue: dispatch_queue_t = dispatch_get_main_queue()
+        var bullet: Bullet? = nil
+        var invalidateConditionBlock: (() -> Bool)? = nil
+    }
+    
 }
 
 
@@ -135,6 +142,11 @@ extension Gatling {
         if shootsImmediately {
             self.performMission(mission)
         }
+    }
+    
+    
+    public func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configuration: Configuration) {
+        
     }
     
     
