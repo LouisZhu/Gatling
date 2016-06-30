@@ -1,9 +1,18 @@
 # Gatling
 
-[![CI Status](http://img.shields.io/travis/Louis Zhu/Gatling.svg?style=flat)](https://travis-ci.org/Louis Zhu/Gatling)
+<!--[![CI Status](http://img.shields.io/travis/Louis Zhu/Gatling.svg?style=flat)](https://travis-ci.org/Louis Zhu/Gatling)-->
 [![Version](https://img.shields.io/cocoapods/v/Gatling.svg?style=flat)](http://cocoapods.org/pods/Gatling)
 [![License](https://img.shields.io/cocoapods/l/Gatling.svg?style=flat)](http://cocoapods.org/pods/Gatling)
 [![Platform](https://img.shields.io/cocoapods/p/Gatling.svg?style=flat)](http://cocoapods.org/pods/Gatling)
+
+Gatling is an timer library written in Swift which lets you create multiple timers, multi-threaded. Every timers has its own interval, working queue, and other configurations.
+
+## Features
+
+- [x] Unlimited timers working at same time
+- [x] Timers works at any dispatch queue as you wish
+- [x] Each timer has its own interval, working queue, and other configurations
+- [x] Stop and release a timer automatically if the caller was no longer exist.
 
 ## Example
 
