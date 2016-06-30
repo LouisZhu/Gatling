@@ -46,7 +46,6 @@ func gatling_log(message: String) {
 }
 
 
-@objc
 public protocol GatlingTarget: NSObjectProtocol {
     func shotWithBullet(_ bullet: Bullet?, ofGatling gatling: Gatling)
 }
