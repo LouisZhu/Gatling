@@ -8,8 +8,24 @@
 
 import Foundation
 
+/**
+ Convenience function to get current dispatch queue's label
+ 
+ - returns: current dispatch queue's label
+ */
+func gatling_dispatch_current_queue_label() -> String? {
+    let label = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL)
+    let string = String.fromCString(label)
+    return string
+}
 
-public typealias Bullet = [String: AnyObject]
+
+func gatling_log(message: String) {
+    #if DEBUG
+        let label = gatling_dispatch_current_queue_label()
+        print("In queue <\(label)>, \(message)")
+    #endif
+}
 
 
 @objc
@@ -18,89 +34,117 @@ public protocol GatlingTarget: NSObjectProtocol {
 }
 
 
+private let schedulingQueueLabel = "com.lepinardsoft.gatling.queue.scheduling"
+
+
 public class Gatling: NSObject {
     
-    private var timer: NSTimer?
     private var missions: [Mission] = [Mission]()
     
+    private var _scheduledMissionLock = NSLock()
+    private var _scheduledMission: Mission?
+    private var scheduledMission: Mission? {
+        get {
+            _scheduledMissionLock.lock()
+            let mission = _scheduledMission
+            _scheduledMissionLock.unlock()
+            return mission
+        }
+        set {
+            _scheduledMissionLock.lock()
+            _scheduledMission = newValue
+            _scheduledMissionLock.unlock()
+        }
+    }
     
     public static let sharedGatling = Gatling()
     
     
-    func timerFired(_ timer: NSTimer) {
-        self.shoot()
+    private static let schedulingQueue = dispatch_queue_create(schedulingQueueLabel, DISPATCH_QUEUE_SERIAL)
+    /**
+     ALWAYS use this method to do mission scheduling works, for thread safety purpose.
+     
+     - parameter schedulingWork: the actual work.
+     */
+    func scheduling(schedulingWork: () -> Void) {
+        dispatch_async(Gatling.schedulingQueue, schedulingWork)
     }
     
     
-    func shoot() {
-        self.missions = self.missions.filter({ (mission: Mission) -> Bool in
-            return mission.target != nil
-        })
-        
-        let now = NSDate()
-        for mission in self.missions {
-            if mission.timeStrategy.timeToGo(now) {
-                self.performMission(mission)
-            }
-        }
+    /**
+     Add a new mission to Gatling, then schedule it.
+     
+     - parameter mission: the mission to add.
+     */
+    func addMission(_ mission: Mission) {
+        assert(gatling_dispatch_current_queue_label() == schedulingQueueLabel, "NOT IN SCHEDULING QUEUE")
+        self.missions.append(mission)
+        self.scheduleMission(mission)
     }
-    
     
     func performMission(_ mission: Mission) {
         mission.target?.shotWithBullet(mission.configuration.bullet, ofGatling: self)
     }
     
-}
-
-
-// MARK: - Nested types
-
-
-extension Gatling {
-    
-    
-    class Mission {
-        weak var target: GatlingTarget?
-        let configuration: Configuration
-        let timeStrategy: TimeStrategy
-        
-        init(target: GatlingTarget, timeInterval: NSTimeInterval, configuration: Configuration) {
-            self.target = target
-            self.configuration = configuration
-            self.timeStrategy = TimeStrategy(timeInterval: timeInterval)
+    func tryToScheduleNextMission() {
+        assert(gatling_dispatch_current_queue_label() == schedulingQueueLabel, "NOT IN SCHEDULING QUEUE")
+        if self.scheduledMission != nil {
+            return
         }
+        
+        if self.missions.count == 0 {
+            return
+        }
+        
+        guard let firstMission = self.missions.first else {
+            return
+        }
+        
+        let earliestMission = self.missions.reduce(firstMission) { (aMission, anotherMission) -> Mission in
+            return (aMission.timeStrategy.nextFireTime < anotherMission.timeStrategy.nextFireTime) ? aMission : anotherMission
+        }
+        
+        self.scheduleMission(earliestMission)
     }
     
-    
-    class TimeStrategy {
-        let startDate: NSDate
-        let timeInterval: NSTimeInterval
-        
-        private var nextFireDate: NSDate
-        
-        init(timeInterval: NSTimeInterval) {
-            let now = NSDate()
-            self.startDate = now
-            self.timeInterval = timeInterval
-            self.nextFireDate = now.dateByAddingTimeInterval(timeInterval)
+    func scheduleMission(_ mission: Mission) {
+        assert(gatling_dispatch_current_queue_label() == schedulingQueueLabel, "NOT IN SCHEDULING QUEUE")
+        let nextFireTime = mission.timeStrategy.nextFireTime
+        func schedule() {
+            self.scheduledMission = nil
+            gatling_dispatch_when(nextFireTime, mission.configuration.workingQueue, {
+                guard let scheduledMission = self.scheduledMission else {
+                    gatling_log("no scheduled mission, trying to schedule next")
+                    self.scheduling {
+                        self.tryToScheduleNextMission()
+                    }
+                    return
+                }
+                
+                if mission !== scheduledMission {
+                    gatling_log("i am not the scheduled mission, abort the work")
+                    return
+                }
+                
+                self.performMission(mission)
+                self.scheduling({ 
+                    mission.timeStrategy.updateNextFireTime()
+                    self.scheduledMission = nil
+                    self.tryToScheduleNextMission()
+                })
+            })
+            self.scheduledMission = mission
         }
         
-        func timeToGo(_ date: NSDate) -> Bool {
-            if date.timeIntervalSinceDate(self.nextFireDate) >= 0 {
-                self.nextFireDate = self.nextFireDate.dateByAddingTimeInterval(self.timeInterval)
-                return true
-            }
-            
-            return false
+        guard let scheduledMission = self.scheduledMission else {
+            schedule()
+            return
         }
-    }
-    
-    
-    public class Configuration {
-        public var shouldShootImmediately: Bool = false
-        public var workingQueue: dispatch_queue_t = dispatch_get_main_queue()
-        public var bullet: Bullet? = nil
-        public var invalidateConditionBlock: (() -> Bool)? = nil
+        
+        if nextFireTime < scheduledMission.timeStrategy.nextFireTime {
+            schedule()
+            return
+        }
     }
     
 }
@@ -111,35 +155,17 @@ extension Gatling {
 
 extension Gatling {
     
-    
-//    public func loadWithTarget(_ target: GatlingTarget, timeInterval: NSTimeInterval, shootsImmediately: Bool, bullet: Bullet? = nil) {
-//        if self.timer == nil {
-//            let timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(Gatling.timerFired(_:)), userInfo: nil, repeats: true)
-//            NSRunLoop.currentRunLoop().addTimer(timer, forMode: NSRunLoopCommonModes);
-//            self.timer = timer
-//        }
-//        
-//        let mission = Mission(target: target, timeInterval: timeInterval, bullet: bullet)
-//        self.missions.append(mission)
-//        if shootsImmediately {
-//            self.performMission(mission)
-//        }
-//    }
-    
-    
     public func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configurationHandler: (inout Configuration) -> Void) {
-        if self.timer == nil {
-            let timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(Gatling.timerFired(_:)), userInfo: nil, repeats: true)
-            NSRunLoop.currentRunLoop().addTimer(timer, forMode: NSRunLoopCommonModes);
-            self.timer = timer
-        }
-        
         var configuration = Configuration()
         configurationHandler(&configuration)
         let mission = Mission(target: target, timeInterval: timeInterval, configuration: configuration)
-        self.missions.append(mission) // TODO: safety
+        self.scheduling {
+            self.addMission(mission)
+        }
         if configuration.shouldShootImmediately {
-            self.performMission(mission)
+            dispatch_async(configuration.workingQueue, { [unowned self] in
+                self.performMission(mission)
+            })
         }
     }
     
