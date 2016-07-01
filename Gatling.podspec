@@ -26,7 +26,7 @@ Gatling lets you create multiple timers, multi-threaded. Every timers has its ow
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Louis Zhu' => 'zhuxiaofan@gmail.com' }
   s.source           = { :git => 'https://github.com/LouisZhu/Gatling.git', :tag => s.version.to_s }
-  nstimer# s.social_media_url = 'https://twitter.com/LouisZhu'
+  # s.social_media_url = 'https://twitter.com/LouisZhu'
 
   s.ios.deployment_target = '8.0'
 
