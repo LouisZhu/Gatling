@@ -47,7 +47,7 @@ func gatling_log(message: String) {
 
 
 public protocol GatlingTarget: NSObjectProtocol {
-    func shotWithBullet(_ bullet: Bullet?, ofGatling gatling: Gatling)
+    func shotWithBullet(bullet: Bullet?, ofGatling gatling: Gatling)
 }
 
 
@@ -93,13 +93,13 @@ public class Gatling: NSObject {
      
      - parameter mission: the mission to add.
      */
-    func addMission(_ mission: Mission) {
+    func addMission(mission: Mission) {
         assert(gatling_dispatch_current_queue_label() == schedulingQueueLabel, "NOT IN SCHEDULING QUEUE")
         self.missions.append(mission)
         self.scheduleMission(mission)
     }
     
-    func performMission(_ mission: Mission) {
+    func performMission(mission: Mission) {
         mission.target?.shotWithBullet(mission.configuration.bullet, ofGatling: self)
     }
     
@@ -124,7 +124,7 @@ public class Gatling: NSObject {
         self.scheduleMission(earliestMission)
     }
     
-    func scheduleMission(_ mission: Mission) {
+    func scheduleMission(mission: Mission) {
         assert(gatling_dispatch_current_queue_label() == schedulingQueueLabel, "NOT IN SCHEDULING QUEUE")
         let nextFireTime = mission.timeStrategy.nextFireTime
         func schedule() {
@@ -187,19 +187,24 @@ extension Gatling {
     }
     
     
-    public func stopShootingTarget(_ target: GatlingTarget) {
-        self.missions = self.missions.filter({ (mission: Mission) -> Bool in
-            guard let missionTarget = mission.target else {
+    public func stopShootingTarget(target: GatlingTarget) {
+        self.scheduling {
+            if self.scheduledMission?.target === target {
+                self.scheduledMission = nil
+            }
+            
+            self.missions = self.missions.filter({ (mission: Mission) -> Bool in
+                guard let missionTarget = mission.target else {
+                    return false
+                }
+                
+                if missionTarget !== target {
+                    return true
+                }
+                
                 return false
-            }
-            
-            // TODO: use a safe identifier
-            if unsafeAddressOf(missionTarget) != unsafeAddressOf(target) {
-                return true
-            }
-            
-            return false
-        })
+            })
+        }
     }
     
     
