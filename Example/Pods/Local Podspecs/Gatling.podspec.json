@@ -1,9 +1,9 @@
 {
   "name": "Gatling",
   "version": "0.1.0",
-  "summary": "A short description of Gatling.",
-  "description": "TODO: Add long description of the pod here.",
-  "homepage": "https://github.com/<GITHUB_USERNAME>/Gatling",
+  "summary": "Gatling is an timer library written in Swift.",
+  "description": "Gatling lets you create multiple timers, multi-threaded. Every timers has its own interval, working queue, and other configurations.",
+  "homepage": "https://github.com/LouisZhu/Gatling",
   "license": {
     "type": "MIT",
     "file": "LICENSE"
@@ -12,7 +12,7 @@
     "Louis Zhu": "zhuxiaofan@gmail.com"
   },
   "source": {
-    "git": "https://github.com/<GITHUB_USERNAME>/Gatling.git",
+    "git": "https://github.com/LouisZhu/Gatling.git",
     "tag": "0.1.0"
   },
   "platforms": {
