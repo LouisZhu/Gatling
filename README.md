@@ -1,3 +1,5 @@
+![Alamofire: Elegant Networking in Swift](https://cloud.githubusercontent.com/assets/423386/16545954/4f516910-416c-11e6-8d29-9058bc3dd58a.jpg)
+
 # Gatling
 
 <!--[![CI Status](http://img.shields.io/travis/Louis Zhu/Gatling.svg?style=flat)](https://travis-ci.org/Louis Zhu/Gatling)-->
