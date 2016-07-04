@@ -26,7 +26,7 @@
 import Foundation
 
 
-struct TimeBaseInfo {
+private struct TimeBaseInfo {
     static let timebase_info: mach_timebase_info_data_t = {
         var info = mach_timebase_info_data_t()
         mach_timebase_info(&info)
@@ -43,17 +43,17 @@ struct TimeBaseInfo {
 }
 
 
-func gatling_time_absolute_to_nanoseconds(absoluteTime: UInt64) -> UInt64 {
+private func gatling_time_absolute_to_nanoseconds(absoluteTime: UInt64) -> UInt64 {
     return absoluteTime * UInt64(TimeBaseInfo.numer) / UInt64(TimeBaseInfo.denom)
 }
 
 
-func gatling_time_nanoseconds_to_absolute(nanoseconds: UInt64) -> UInt64 {
+private func gatling_time_nanoseconds_to_absolute(nanoseconds: UInt64) -> UInt64 {
     return nanoseconds * UInt64(TimeBaseInfo.denom) / UInt64(TimeBaseInfo.numer)
 }
 
 
-public func gatling_dispatch_when(when: UInt64, _ queue: dispatch_queue_t, _ block: dispatch_block_t) {
+internal func gatling_dispatch_when(when: UInt64, _ queue: dispatch_queue_t, _ block: dispatch_block_t) {
     let now = mach_absolute_time()
     if when < now {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0), queue, block)
@@ -64,10 +64,10 @@ public func gatling_dispatch_when(when: UInt64, _ queue: dispatch_queue_t, _ blo
 }
 
 
-class TimeStrategy {
+internal class TimeStrategy {
     
-    let startTime: UInt64
-    let timeInterval: NSTimeInterval
+    private let startTime: UInt64
+    private let timeInterval: NSTimeInterval
     
     private(set) var nextFireTime: UInt64
     
@@ -82,7 +82,7 @@ class TimeStrategy {
     }
     
     
-    func updateNextFireTime() {
+    internal func updateNextFireTime() {
         let delta = gatling_time_nanoseconds_to_absolute(UInt64(self.timeInterval * Double(NSEC_PER_SEC)))
         self.nextFireTime = self.nextFireTime + delta
     }

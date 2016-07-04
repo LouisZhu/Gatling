@@ -26,10 +26,10 @@
 import Foundation
 
 
-class Mission {
-    weak var target: GatlingTarget?
+public class Mission {
+    private(set) weak var target: GatlingTarget?
     let configuration: Configuration
-    let timeStrategy: TimeStrategy
+    internal let timeStrategy: TimeStrategy
     
     var timer: dispatch_source_t?
     
