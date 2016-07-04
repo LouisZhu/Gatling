@@ -33,5 +33,6 @@ public class Configuration {
     public var shouldShootImmediately: Bool = false
     public var workingQueue: dispatch_queue_t = dispatch_get_main_queue()
     public var bullet: Bullet? = nil
-    public var invalidateConditionBlock: (() -> Bool)? = nil
+    public var onShoot: ((bullet: Bullet?) -> Void)? = nil
+//    public var invalidateConditionBlock: (() -> Bool)? = nil // TODO
 }
