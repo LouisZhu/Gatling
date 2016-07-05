@@ -183,6 +183,7 @@ public class Gatling: NSObject {
 
 public extension Gatling {
     
+    
     public class func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configurationHandler: ((inout Configuration) -> Void)? = nil) {
         let gatling = self.sharedGatling
 
