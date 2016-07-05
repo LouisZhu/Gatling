@@ -15,15 +15,15 @@ Gatling is an timer library written in Swift which lets you create multiple time
 - [x] Unlimited timers working at same time
 - [x] Timers works at any dispatch queue as you wish
 - [x] Each timer has its own interval, working queue, and other configurations
+- [x] Use closure to report timer firing event
 - [x] Stop and release a timer automatically if the caller was no longer exist
 
 ### More features under developing
 
 - Pause/resume timers
-- Use closure to report timer firing event
 - Report more details to caller when a timer fired, such as how many times it has fired, the time interval from its start time, etc
 - Swift 3 supporting
-- Swift Package Manager supporting
+- Carthage supporting
 
 ## How to use
 
