@@ -183,11 +183,12 @@ public class Gatling: NSObject {
 
 public extension Gatling {
     
-    public class func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configurationHandler: (inout Configuration) -> Void) {
+    
+    public class func loadWithTarget(target: GatlingTarget, timeInterval: NSTimeInterval, configurationHandler: ((inout Configuration) -> Void)? = nil) {
         let gatling = self.sharedGatling
 
         var configuration = Configuration()
-        configurationHandler(&configuration)
+        configurationHandler?(&configuration)
         let mission = Mission(target: target, timeInterval: timeInterval, configuration: configuration)
         gatling.scheduling {
             gatling.addMission(mission)

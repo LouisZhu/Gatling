@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/cocoapods/l/Gatling.svg?style=flat)](http://cocoapods.org/pods/Gatling)
 [![Platform](https://img.shields.io/cocoapods/p/Gatling.svg?style=flat)](http://cocoapods.org/pods/Gatling)
 
-Gatling is an timer library written in Swift which lets you create multiple timers, multi-threaded. Every timers has its own interval, working queue, and other configurations.
+Gatling is an timer library written in Swift which lets you create multiple timers, multithreaded. Every timers has its own interval, working queue, and other configurations.
 
 ## Features
 
@@ -25,11 +25,70 @@ Gatling is an timer library written in Swift which lets you create multiple time
 - Swift 3 supporting
 - Swift Package Manager supporting
 
-## Example
+## How to use
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+### Start a timer (load gatling)
 
-## Requirements
+```swift
+Gatling.loadWithTarget(self, timeInterval: 2.0)
+```
+
+### The timer firing (gatling shooting) event
+
+Normally, Gatling invokes a 'callback' method to inform the caller that the timer is firing (the gatling is shooting). You can simply implement the method to receive the event.
+
+```swift
+extension MyClass: GatlingTarget {
+    
+    func shotWithBullet(bullet: Bullet?) {
+        print("Ahhhh, I'm being shot by gatling")
+    }
+    
+}
+```
+
+### Configure the timer
+
+Beside the simplest timer mentioned above, you can configure your timer for more details. Including
+
+- `shouldShootImmediately: Bool`: Indicates if the timers should fire immediately. If `false` it doesn't, just acts like the `NSTimer`; if `true`, the timer will perform an extra firing immediately after the 'loading' method was invoked.
+- `workingQueue: dispatch_queue_t`: In which dispatch queue the callback will execute. Yes gatling is a multithreaded timer so you can specify any queue as you wish.
+- `bullet: Bullet?`: The user info for the timer, treat it as `userInfo` of `NSTimer`. Gatling will pass it back to you in the callback method.
+
+```swift
+        Gatling.loadWithTarget(self, timeInterval: 1.5) { (configuration) in
+            configuration.shouldShootImmediately = true
+            configuration.workingQueue = dispatch_queue_create("com.mycompany.queue.working", nil)
+            configuration.bullet = ["Identifier": "some identifier"]
+        }
+```
+
+### Callback closure
+
+You can use a callback closure to receive the timer's firing event. Specify it in the `Configuraion`.
+
+```swift
+        Gatling.loadWithTarget(self, timeInterval: 1.5) { (configuration) in
+            configuration.onShoot = { bullet in
+                print("Ahhhh, I'm being shot by gatling")
+            }
+        }
+```
+
+NOTE: if you have specified a callback closure the 'callback method' will not be invoked.
+
+## About the precision
+
+Gatling is designed to be a easy way to use multiple timers for most cocoa developers. So it is NOT a high precision timer.
+
+- High precision in not needed for regular usage of timers, such as scroll the paged-advertisement-banner periodically, or fetch new data in background periodically.
+- High precision timers consume compute cycles and battery.
+
+Gatling uses GCD as the underlying technology. So it's better to keep the timer's working queue clean and simple to avoid blocking the queue. The best practice is to use an individual queue for every individual timer.
+
+Gatling uses mach absolute time to offer the highest precision as possible. For more information, please refer <https://developer.apple.com/library/mac/qa/qa1398/_index.html>
+
+For more information about high precision timers, or you do need a high precision timer, please refer <https://developer.apple.com/library/ios/technotes/tn2169/_index.html>
 
 ## Installation
 
